@@ -1,0 +1,6 @@
+opencv-python
+ultralytics
+deepface
+kafka-python  # If you plan to implement alerts
+websockets    # If you plan to implement alerts
+numpy

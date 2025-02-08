@@ -1,0 +1,15 @@
+# Virtual environment
+venv/
+.env
+
+# Python-related
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Log files
+*.log
+
+# Node.js (for your React frontend)
+node_modules/
