@@ -75,7 +75,6 @@ def process_video():
         return jsonify({'error': str(e)}), 500
 
     finally:  # Cleanup
-        
         if os.path.exists(video_path):
             if os.path.isdir(video_path):  # Check if it's a directory
                 shutil.rmtree(video_path)  # Remove directory
