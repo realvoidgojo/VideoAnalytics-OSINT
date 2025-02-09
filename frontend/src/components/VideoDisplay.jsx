@@ -13,6 +13,8 @@ const VideoDisplay = () => {
   const [selectedModel, setSelectedModel] = useState("yolov8n.pt");
   const [frameInterval, setFrameInterval] = useState(1);
 
+  const [containerWidth, setContainerWidth] = useState(720);
+
   const handleVideoUpload = async (event) => {
     const file = event.target.files[0];
     setVideoSource(URL.createObjectURL(file));
@@ -64,7 +66,7 @@ const VideoDisplay = () => {
       if (detections.length > 0 && frameIndex < detections.length) {
         const currentFrameDetections = detections[frameIndex];
         currentFrameDetections.forEach((detection) => {
-          const { class_name, confidence, box } = detection;
+          const { class_name, confidence, box, track_id } = detection;
           if (box && box.length === 4) {
             const x1 = box[0] * widthScaleFactor;
             const y1 = box[1] * heightScaleFactor;
@@ -77,9 +79,15 @@ const VideoDisplay = () => {
             ctx.lineWidth = 2;
             ctx.stroke();
 
+            // Draw the label
             ctx.fillStyle = "red";
             ctx.font = "14px Arial";
-            ctx.fillText(`${class_name} ${confidence.toFixed(2)}`, x1, y1 - 5);
+
+            // Include track_id in the label if available
+            const label = track_id
+              ? `${class_name} ${confidence.toFixed(2)} (ID: ${track_id})`
+              : `${class_name} ${confidence.toFixed(2)}`;
+            ctx.fillText(label, x1, y1 - 5);
           }
         });
       }
@@ -87,8 +95,11 @@ const VideoDisplay = () => {
     };
 
     const updateCanvasSize = () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      if (video.videoWidth && video.videoHeight) {
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        canvas.width = containerWidth;
+        canvas.height = containerWidth / aspectRatio;
+      }
     };
 
     video.addEventListener("loadedmetadata", updateCanvasSize);
@@ -134,23 +145,42 @@ const VideoDisplay = () => {
           min="1" // Ensure interval is at least 1
         />
       </label>
+      <label>
+        <span style={{ fontSize: 15, marginLeft: 10, marginRight: 10 }}>
+          Container Width:
+        </span>
+        <input
+          type="number"
+          value={containerWidth}
+          onChange={(e) => setContainerWidth(parseInt(e.target.value, 10))}
+          min="100" // Ensure container width is at least 100px
+        />
+      </label>
 
       {videoSource && (
-        <div>
+        <div style={{ position: "relative" }}>
           <video
             ref={videoRef}
             src={videoSource}
             controls
-            style={{ zIndex: 1, position: "relative" }}
+            style={{
+              zIndex: 1,
+              position: "relative",
+              width: `${containerWidth}px`,
+              height: "auto",
+              objectFit: "contain",
+            }}
           />
           <canvas
             ref={canvasRef}
             style={{
-              position: "absolute",
+              position: "relative",
               top: 0,
               left: 0,
               zIndex: 2,
+              padding: "5px",
               pointerEvents: "none",
+              marginTop: "10px", // Add some space between video and canvas
             }}
           />
         </div>

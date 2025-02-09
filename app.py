@@ -25,7 +25,7 @@ def process_video():
 
     frame_interval = int(request.form.get('interval', 1))
     print(f"Request for frame interval {frame_interval}")
-    
+
     # Save the uploaded video to a temporary location
     video_path = os.path.join('data', video_file.filename)  # Use the 'data' directory
     video_file.save(video_path)
@@ -55,9 +55,10 @@ def process_video():
             for detection in object_results:
                 # Directly use detection dictionary
                 formatted_results.append({
-                    'class_name': detection['class'],
+                    'class_name': detection['class_name'],
                     'confidence': detection['confidence'],
-                    'box': detection['bbox']  # Directly use bbox
+                    'box': detection['box'],  # Directly use bbox
+                    'track_id': detection['track_id']
                 })
             
             all_results.append(formatted_results)
