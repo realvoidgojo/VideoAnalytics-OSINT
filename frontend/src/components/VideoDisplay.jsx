@@ -197,11 +197,11 @@ const VideoDisplay = () => {
         value={selectedModel}
         onChange={(e) => setSelectedModel(e.target.value)}
       >
-        <option value="yolov8n.pt">YOLOv8n</option>
-        <option value="yolov8s.pt">YOLOv8s</option>
-        <option value="yolov8m.pt">YOLOv8m</option>
-        <option value="yolov8l.pt">YOLOv8l</option>
-        <option value="yolov8x.pt">YOLOv8x</option>
+        <option value="yolov11n.pt">YOLOv11n</option>
+        <option value="yolov11s.pt">YOLOv11s</option>
+        <option value="yolov11m.pt">YOLOv11m</option>
+        <option value="yolov11l.pt">YOLOv11l</option>
+        <option value="yolov11x.pt">YOLOv11x</option>
       </select>
 
       <label>
