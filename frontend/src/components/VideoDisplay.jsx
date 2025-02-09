@@ -18,6 +18,7 @@ const VideoDisplay = () => {
 
     const formData = new FormData();
     formData.append("video", file);
+    formData.append("model", selectedModel);
 
     try {
       const response = await axios.post(
