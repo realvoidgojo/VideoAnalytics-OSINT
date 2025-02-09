@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
-function VideoDisplay() {
+const VideoDisplay = () => {
   const [videoSource, setVideoSource] = useState(null);
   const [detections, setDetections] = useState([]);
   const videoRef = useRef(null);
@@ -24,13 +24,10 @@ function VideoDisplay() {
         "http://localhost:5000/process_video",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
-      //Add this, this grabs information.
       setOriginalWidth(response.data.original_width);
       setOriginalHeight(response.data.original_height);
       setPreprocessedWidth(response.data.preprocessed_width);
@@ -45,7 +42,6 @@ function VideoDisplay() {
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-
     if (!video || !canvas) return;
 
     const ctx = canvas.getContext("2d");
@@ -57,58 +53,42 @@ function VideoDisplay() {
       const currentTime = video.currentTime;
       const frameIndex = Math.floor(currentTime * 30);
 
-      // console.log(
-      //   `Dimensions: originalFrameWidth = ${originalFrameWidth}, originalFrameHeight = ${originalFrameHeight}, preprocessedFrameWidth = ${preprocessedFrameWidth}, preprocessedFrameHeight = ${preprocessedFrameHeight}, canvas.width = ${canvas.width}, canvas.height = ${canvas.height}, video.videoWidth = ${video.videoWidth}, video.videoHeight = ${video.videoHeight}`
-      // );
-
-      // Use the same dimensions as the original frames
       const widthScaleFactor = canvas.width / preprocessedWidth;
       const heightScaleFactor = canvas.height / preprocessedHeight;
 
-      // Check detections and frame index
       if (detections.length > 0 && frameIndex < detections.length) {
         const currentFrameDetections = detections[frameIndex];
-
         currentFrameDetections.forEach((detection) => {
           const { class_name, confidence, box } = detection;
-
-          // Ensure box coordinates are valid
           if (box && box.length === 4) {
-            // Scale the bounding box coordinates
             const x1 = box[0] * widthScaleFactor;
             const y1 = box[1] * heightScaleFactor;
             const x2 = box[2] * widthScaleFactor;
             const y2 = box[3] * heightScaleFactor;
 
-            // Draw the bounding box
             ctx.beginPath();
             ctx.rect(x1, y1, x2 - x1, y2 - y1);
             ctx.strokeStyle = "red";
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw the label
             ctx.fillStyle = "red";
             ctx.font = "14px Arial";
             ctx.fillText(`${class_name} ${confidence.toFixed(2)}`, x1, y1 - 5);
           }
         });
       }
-
       requestAnimationFrame(drawDetections);
     };
 
-    // Set canvas size to match video
     const updateCanvasSize = () => {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
     };
 
-    // Add event listeners
     video.addEventListener("loadedmetadata", updateCanvasSize);
     video.addEventListener("play", drawDetections);
 
-    // Cleanup
     return () => {
       video.removeEventListener("loadedmetadata", updateCanvasSize);
       video.removeEventListener("play", drawDetections);
@@ -127,7 +107,6 @@ function VideoDisplay() {
     <div style={{ position: "relative" }}>
       <input type="file" accept="video/*" onChange={handleVideoUpload} />
 
-      {/* Dropdown menu for model selection */}
       <select
         value={selectedModel}
         onChange={(e) => setSelectedModel(e.target.value)}
@@ -161,6 +140,6 @@ function VideoDisplay() {
       )}
     </div>
   );
-}
+};
 
 export default VideoDisplay;
