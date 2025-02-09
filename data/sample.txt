@@ -1,0 +1,1 @@
+# This folder is used as temp data to store video while processing

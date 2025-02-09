@@ -20,7 +20,7 @@ def test_opencv():
 def test_yolov8():
     try:
         model = ultralytics.YOLO("yolov8n.pt")  # requires internet connection for first run
-        results = model("https://ultralytics.com/images/zidane.jpg") #test image, requires internet connection
+        results = model("./assests/zidane.jpg") #test image, requires internet connection
         print("YOLOv8 test: PASSED")
     except Exception as e:
         print("YOLOv8 test: FAILED", e)
