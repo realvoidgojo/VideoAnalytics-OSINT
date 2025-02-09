@@ -11,6 +11,7 @@ const VideoDisplay = () => {
   const [preprocessedWidth, setPreprocessedWidth] = useState(0);
   const [preprocessedHeight, setPreprocessedHeight] = useState(0);
   const [selectedModel, setSelectedModel] = useState("yolov8n.pt");
+  const [frameInterval, setFrameInterval] = useState(1);
 
   const handleVideoUpload = async (event) => {
     const file = event.target.files[0];
@@ -19,6 +20,7 @@ const VideoDisplay = () => {
     const formData = new FormData();
     formData.append("video", file);
     formData.append("model", selectedModel);
+    formData.append("interval", frameInterval);
 
     try {
       const response = await axios.post(
@@ -52,7 +54,9 @@ const VideoDisplay = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const currentTime = video.currentTime;
-      const frameIndex = Math.floor(currentTime * 30);
+      const frameIndex = Math.floor(
+        currentTime * (detections.length / video.duration)
+      );
 
       const widthScaleFactor = canvas.width / preprocessedWidth;
       const heightScaleFactor = canvas.height / preprocessedHeight;
@@ -118,6 +122,18 @@ const VideoDisplay = () => {
         <option value="yolov8l.pt">YOLOv8l</option>
         <option value="yolov8x.pt">YOLOv8x</option>
       </select>
+
+      <label>
+        <span style={{ fontSize: 15, marginLeft: 10, marginRight: 10 }}>
+          Frames
+        </span>
+        <input
+          type="number"
+          value={frameInterval}
+          onChange={(e) => setFrameInterval(parseInt(e.target.value, 10))}
+          min="1" // Ensure interval is at least 1
+        />
+      </label>
 
       {videoSource && (
         <div>

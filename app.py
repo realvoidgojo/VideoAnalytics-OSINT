@@ -23,12 +23,16 @@ def process_video():
     model_name = request.form.get('model', 'yolov8n.pt') #if no name defaults to yolov8n
     print(f"Request for model {model_name}")
 
+    frame_interval = int(request.form.get('interval', 1))
+    print(f"Request for frame interval {frame_interval}")
+    
     # Save the uploaded video to a temporary location
     video_path = os.path.join('data', video_file.filename)  # Use the 'data' directory
     video_file.save(video_path)
 
     try:
-        frames = video_processing.extract_frames(video_path)
+
+        frames = video_processing.extract_frames(video_path, interval=frame_interval)
         all_results = []
         
         for frame in frames:
