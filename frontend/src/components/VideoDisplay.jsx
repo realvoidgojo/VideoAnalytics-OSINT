@@ -12,12 +12,15 @@ const VideoDisplay = () => {
   const [preprocessedHeight, setPreprocessedHeight] = useState(0);
   const [selectedModel, setSelectedModel] = useState("yolov8n.pt");
   const [frameInterval, setFrameInterval] = useState(1);
-
   const [containerWidth, setContainerWidth] = useState(720);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isVideoPaused, setIsVideoPaused] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleVideoUpload = async (event) => {
     const file = event.target.files[0];
     setVideoSource(URL.createObjectURL(file));
+    setIsProcessing(true); // Start processing
 
     const formData = new FormData();
     formData.append("video", file);
@@ -29,7 +32,9 @@ const VideoDisplay = () => {
         "http://localhost:5000/process_video",
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
@@ -41,7 +46,70 @@ const VideoDisplay = () => {
     } catch (error) {
       console.error("Error processing video:", error);
       alert("Error processing video. Please check the console for details.");
+    } finally {
+      setIsProcessing(false); // Processing done
     }
+  };
+  const handleReset = () => {
+    // Reset video source, detections, and other relevant states
+    setVideoSource(null);
+    setDetections([]);
+    setOriginalWidth(0);
+    setOriginalHeight(0);
+    setPreprocessedWidth(0);
+    setPreprocessedHeight(0);
+    setIsProcessing(false);
+    setIsVideoPaused(false);
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the selected file
+    }
+    // If you have a video element, you might want to pause it
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+
+    // Clear the canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  // Add the methods to tell the flask server what to do
+  const pauseVideoProcessing = async () => {
+    try {
+      await axios.post("http://localhost:5000/pause_processing");
+      console.log("Video processing paused on the backend.");
+    } catch (error) {
+      console.error("Error pausing video processing:", error);
+    }
+  };
+  // Add the method to tell the flask server what to do
+
+  const resumeVideoProcessing = async () => {
+    try {
+      await axios.post("http://localhost:5000/resume_processing");
+      console.log("Video processing resumed on the backend.");
+    } catch (error) {
+      console.error("Error resuming video processing:", error);
+    }
+  };
+
+  const handleStopResume = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isVideoPaused) {
+      video.play();
+      resumeVideoProcessing(); // Resume video processing on the backend
+    } else {
+      video.pause();
+      pauseVideoProcessing(); // Pause video processing on the backend
+    }
+    setIsVideoPaused(!isVideoPaused);
   };
 
   useEffect(() => {
@@ -117,6 +185,8 @@ const VideoDisplay = () => {
     preprocessedWidth,
     preprocessedHeight,
     selectedModel,
+    containerWidth,
+    isVideoPaused,
   ]);
 
   return (
@@ -145,7 +215,7 @@ const VideoDisplay = () => {
           min="1" // Ensure interval is at least 1
         />
       </label>
-      <label>
+      <label style={{ marginLeft: 10, marginRight: 10 }}>
         <span style={{ fontSize: 15, marginLeft: 10, marginRight: 10 }}>
           Container Width:
         </span>
@@ -156,6 +226,37 @@ const VideoDisplay = () => {
           min="100" // Ensure container width is at least 100px
         />
       </label>
+
+      {/* Reset and Stop buttons */}
+      <button
+        onClick={handleReset}
+        style={{
+          padding: "8px 12px",
+          fontSize: "14px",
+          cursor: "pointer",
+          backgroundColor: "#f44336",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+        }}
+      >
+        Reset
+      </button>
+      <button
+        onClick={handleStopResume}
+        style={{
+          padding: "8px 12px",
+          fontSize: "14px",
+          cursor: "pointer",
+          backgroundColor: isVideoPaused ? "#4CAF50" : "#f44336",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          marginLeft: "10px",
+        }}
+      >
+        {isVideoPaused ? "Resume" : "Stop"}
+      </button>
 
       {videoSource && (
         <div style={{ position: "relative" }}>
