@@ -15,13 +15,14 @@ is_paused = False
 current_video_path = None
 current_frame_index = 0
 frames = []  # Store extracted frames
+skip_processing = False
 
 @app.route('/process_video', methods=['POST'])
 def process_video():
     """
     Processes a video file, performs object detection, and returns the results as JSON.
     """
-    global is_processing, is_paused, current_video_path, current_frame_index, frames
+    global is_processing, is_paused, current_video_path, current_frame_index, frames ,  skip_processing
     
     if 'video' not in request.files:
         return jsonify({'error': 'No video file provided'}), 400
@@ -30,7 +31,7 @@ def process_video():
     if video_file.filename == '':
         return jsonify({'error': 'No video selected'}), 400
     
-    model_name = request.form.get('model', 'yolov8n.pt') #if no name defaults to yolov8n
+    model_name = request.form.get('model', 'yolov11n.pt') #if no name defaults to yolov11n
     print(f"Request for model {model_name}")
 
     frame_interval = int(request.form.get('interval', 1))
@@ -46,6 +47,7 @@ def process_video():
 
         is_processing = True
         is_paused = False
+        skip_processing = False
         current_video_path = video_path
         current_frame_index = 0
         all_results = []
@@ -59,7 +61,7 @@ def process_video():
         for i, frame in enumerate(frames):
             current_frame_index = i  # Update frame index
             # Check if processing should stop or pause
-            if not is_processing:
+            if not is_processing or skip_processing:
                 print("Processing stopped by user")
                 break
             if is_paused:
@@ -113,6 +115,8 @@ def process_video():
 
         is_processing = False
         is_paused = False
+        skip_processing = False #Reset Skip flag
+
         current_video_path = None
         current_frame_index = 0
         frames = []  # Clear frames
@@ -122,6 +126,13 @@ def process_video():
                 shutil.rmtree(video_path)  # Remove directory
             elif os.path.isfile(video_path):  # Check if it's a file  
                 os.remove(video_path)
+
+@app.route('/reset_processing', methods=['POST'])
+def reset_processing():
+    """Skips the current video processing."""
+    global skip_processing
+    skip_processing = True
+    return jsonify({'message': 'Processing will be skipped after current frame'})
 
 # End point to pause the video
 @app.route('/pause_processing', methods=['POST'])

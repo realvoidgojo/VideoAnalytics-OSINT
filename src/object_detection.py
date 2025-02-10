@@ -12,7 +12,7 @@ class UniqueIDGenerator:
         self.next_id += 1
         return self.next_id
 
-def detect_objects(frame, model_path="./models/yolov8n.pt", confidence_threshold=0.5, iou_threshold=0.5):
+def detect_objects(frame, model_path="./models/yolov11n.pt", confidence_threshold=0.5, iou_threshold=0.5):
     model = YOLO(model_path)
     results = model.track(frame, persist=True, conf=confidence_threshold, iou=iou_threshold)
     

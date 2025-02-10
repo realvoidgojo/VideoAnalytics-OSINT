@@ -8,6 +8,11 @@
   text-align: center;
 }
 
+.App h1 {
+  font-size: 3rem;
+  margin: 1rem 0;
+}
+
 .App-header {
   background-color: #282c34;
   width: 100%;

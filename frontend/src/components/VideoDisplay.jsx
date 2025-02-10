@@ -10,20 +10,27 @@ const VideoDisplay = () => {
   const [originalHeight, setOriginalHeight] = useState(0);
   const [preprocessedWidth, setPreprocessedWidth] = useState(0);
   const [preprocessedHeight, setPreprocessedHeight] = useState(0);
-  const [selectedModel, setSelectedModel] = useState("yolov8n.pt");
+  const [selectedModel, setSelectedModel] = useState("yolov11n.pt");
   const [frameInterval, setFrameInterval] = useState(1);
   const [containerWidth, setContainerWidth] = useState(720);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const fileInputRef = useRef(null);
+  const [hasVideoUploaded, setHasVideoUploaded] = useState(false); // Track if video is uploaded
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleVideoUpload = async (event) => {
+  const handleVideoUpload = (event) => {
     const file = event.target.files[0];
     setVideoSource(URL.createObjectURL(file));
+    setHasVideoUploaded(true);
+    setSelectedFile(file);
+  };
+
+  const handleStartProcessing = async () => {
     setIsProcessing(true); // Start processing
 
     const formData = new FormData();
-    formData.append("video", file);
+    formData.append("video", selectedFile);
     formData.append("model", selectedModel);
     formData.append("interval", frameInterval);
 
@@ -50,7 +57,7 @@ const VideoDisplay = () => {
       setIsProcessing(false); // Processing done
     }
   };
-  const handleReset = () => {
+  const handleReset = async () => {
     // Reset video source, detections, and other relevant states
     setVideoSource(null);
     setDetections([]);
@@ -60,6 +67,7 @@ const VideoDisplay = () => {
     setPreprocessedHeight(0);
     setIsProcessing(false);
     setIsVideoPaused(false);
+    setHasVideoUploaded(false); // Reset the flag
     // Clear the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Clear the selected file
@@ -75,6 +83,13 @@ const VideoDisplay = () => {
     if (canvas) {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    // Send signal to backend to skip current processing
+    try {
+      await axios.post("http://localhost:5000/reset_processing");
+      console.log("Processing reset signal sent to the backend.");
+    } catch (error) {
+      console.error("Error sending reset signal:", error);
     }
   };
 
@@ -191,11 +206,29 @@ const VideoDisplay = () => {
 
   return (
     <div style={{ position: "relative" }}>
-      <input type="file" accept="video/*" onChange={handleVideoUpload} />
+      <input
+        type="file"
+        accept="video/*"
+        onChange={handleVideoUpload}
+        ref={fileInputRef}
+        style={{
+          border: "1px solid #ccc",
+          padding: "8px",
+          margin: "10px",
+          borderRadius: "6px",
+          backgroundColor: "#000f",
+        }}
+      />
 
       <select
         value={selectedModel}
         onChange={(e) => setSelectedModel(e.target.value)}
+        style={{
+          border: "1px solid #ccc",
+          padding: "8px",
+          margin: "10px",
+          borderRadius: "6px",
+        }}
       >
         <option value="yolov11n.pt">YOLOv11n</option>
         <option value="yolov11s.pt">YOLOv11s</option>
@@ -203,6 +236,27 @@ const VideoDisplay = () => {
         <option value="yolov11l.pt">YOLOv11l</option>
         <option value="yolov11x.pt">YOLOv11x</option>
       </select>
+
+      {/* Add a condition where to process the video */}
+
+      {hasVideoUploaded && (
+        <button
+          onClick={handleStartProcessing}
+          disabled={isProcessing}
+          style={{
+            padding: "8px 12px",
+            fontSize: "14px",
+            cursor: "pointer",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            margin: "10px",
+          }}
+        >
+          {isProcessing ? "Processing..." : "Start Processing"}
+        </button>
+      )}
 
       <label>
         <span style={{ fontSize: 15, marginLeft: 10, marginRight: 10 }}>
@@ -213,6 +267,13 @@ const VideoDisplay = () => {
           value={frameInterval}
           onChange={(e) => setFrameInterval(parseInt(e.target.value, 10))}
           min="1" // Ensure interval is at least 1
+          style={{
+            border: "1px solid #ccc",
+            padding: "8px",
+            margin: "10px",
+            borderRadius: "6px",
+            width: "25px",
+          }}
         />
       </label>
       <label style={{ marginLeft: 10, marginRight: 10 }}>
@@ -224,6 +285,13 @@ const VideoDisplay = () => {
           value={containerWidth}
           onChange={(e) => setContainerWidth(parseInt(e.target.value, 10))}
           min="100" // Ensure container width is at least 100px
+          style={{
+            border: "1px solid #ccc",
+            padding: "8px",
+            margin: "10px",
+            borderRadius: "6px",
+            width: "55px",
+          }}
         />
       </label>
 

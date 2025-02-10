@@ -1,6 +1,6 @@
 # Video Object Detection Project
 
-This project implements object detection on video using a React frontend and a Flask backend, leveraging the YOLOv8 model. It allows users to upload a video, select a YOLOv8 model, and visualize object detection bounding boxes on the video.
+This project implements object detection on video using a React frontend and a Flask backend, leveraging the YOLOv11 model. It allows users to upload a video, select a YOLOv11 model, and visualize object detection bounding boxes on the video.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ Before you begin, ensure you have the following installed:
       pip install flask flask-cors opencv-python ultralytics Pillow
       ```
 
-    - **Download YOLOv8 Models:** Create a directory named `models` in your backend directory. Download the desired YOLOv8 models (e.g., `yolov8n.pt`, `yolov8s.pt`, etc.) from the [official YOLOv8 repository](https://github.com/ultralytics/ultralytics) or the [Ultralytics website](https://ultralytics.com/) and place them in the `models` directory.
+    - **Download YOLOv11 Models:** Create a directory named `models` in your backend directory. Download the desired YOLOv11 models (e.g., `yolov11n.pt`, `yolov11s.pt`, etc.) from the [official YOLOv11 repository](https://github.com/ultralytics/ultralytics) or the [Ultralytics website](https://ultralytics.com/) and place them in the `models` directory.
 
     - **Set up the `data` directory:** Create an empty directory named `data` in your backend directory. This is where uploaded videos will be temporarily stored.
 
@@ -60,7 +60,7 @@ Before you begin, ensure you have the following installed:
 
 - **Backend (Flask):**
 
-  - Ensure that the paths to the YOLOv8 models in your `object_detection.py` file are correct, relative to the location of your `app.py` file. The default path is `./models/yolov8n.pt`.
+  - Ensure that the paths to the YOLOv11 models in your `object_detection.py` file are correct, relative to the location of your `app.py` file. The default path is `./models/yolov11n.pt`.
 
 - **Frontend (React):**
 
@@ -92,7 +92,7 @@ Before you begin, ensure you have the following installed:
 
 1.  **Upload Video:** In the React app, use the "Choose File" button to upload a video file.
 
-2.  **Select YOLOv8 Model:** Use the dropdown menu to select the desired YOLOv8 model for object detection.
+2.  **Select YOLOv11 Model:** Use the dropdown menu to select the desired YOLOv11 model for object detection.
 
 3.  **View Detections:** The video will play, and the object detection bounding boxes will be displayed on top of the video.
 
@@ -103,9 +103,9 @@ video-object-detection-project/
 │    app.py      # Main Flask application file
 │   src/        # Directory for source code
 │   ├── video_processing.py #Frame extraction and processing
-│   └── object_detection.py #YOLOv8 object detection
+│   └── object_detection.py #YOLOv11 object detection
 │   clips/        # Directory for footages
-│   models/     # Directory for YOLOv8 models (.pt files)
+│   models/     # Directory for YOLOv11 models (.pt files)
 │   data/       # Directory for temporarily storing uploaded videos
 │   venv/       # Python virtual environment
 │   test/       # to check dependencies are working
@@ -122,7 +122,7 @@ video-object-detection-project/
 
 - **CORS Errors:** If you encounter Cross-Origin Resource Sharing (CORS) errors in your browser's console, make sure that you have correctly enabled CORS in your Flask app using the `flask_cors` library.
 
-- **Model Not Found Errors:** If the YOLOv8 model cannot be found, double-check that the path to the model file in `object_detection.py` is correct and that the model file exists in the specified location.
+- **Model Not Found Errors:** If the YOLOv11 model cannot be found, double-check that the path to the model file in `object_detection.py` is correct and that the model file exists in the specified location.
 
 - **Video Not Playing:** If the video is not playing in the React app, make sure that the video file is a supported format and that the `videoSource` state variable is correctly set.
 

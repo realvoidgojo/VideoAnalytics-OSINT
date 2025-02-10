@@ -6,7 +6,7 @@ function App() {
     <>
       <div className="App">
         <header className="App-header">
-          <h1>CCTV Analytics</h1>
+          <h1>Video Analytics</h1>
           <VideoDisplay />
         </header>
       </div>
