@@ -272,7 +272,7 @@ const VideoDisplay = () => {
             padding: "8px",
             margin: "10px",
             borderRadius: "6px",
-            width: "25px",
+            width: "35px",
           }}
         />
       </label>
