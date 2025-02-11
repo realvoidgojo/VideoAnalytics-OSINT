@@ -126,10 +126,9 @@ video-object-detection-project/
 
 - **Video Not Playing:** If the video is not playing in the React app, make sure that the video file is a supported format and that the `videoSource` state variable is correctly set.
 
-<video width="720" controls>
-  <source src="assets/output.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+https://github.com/user-attachments/assets/6676dffa-0451-43ef-a0bf-6a1b65836654
+
 
 ## Contributing
 
