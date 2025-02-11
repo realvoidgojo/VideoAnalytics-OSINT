@@ -18,6 +18,7 @@ const VideoDisplay = () => {
   const fileInputRef = useRef(null);
   const [hasVideoUploaded, setHasVideoUploaded] = useState(false); // Track if video is uploaded
   const [selectedFile, setSelectedFile] = useState(null);
+  const [classColors, setClassColors] = useState({});
 
   const handleVideoUpload = (event) => {
     const file = event.target.files[0];
@@ -127,6 +128,16 @@ const VideoDisplay = () => {
     setIsVideoPaused(!isVideoPaused);
   };
 
+  // Handler for updating class colors
+
+  const handleClassColorChange = (className, color) => {
+    setClassColors((prevColors) => ({
+      ...prevColors,
+
+      [className]: color,
+    }));
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -158,12 +169,12 @@ const VideoDisplay = () => {
 
             ctx.beginPath();
             ctx.rect(x1, y1, x2 - x1, y2 - y1);
-            ctx.strokeStyle = "red";
+            ctx.strokeStyle = classColors[class_name] || "red"; // Use class-specific color or default to red
             ctx.lineWidth = 2;
             ctx.stroke();
 
             // Draw the label
-            ctx.fillStyle = "red";
+            ctx.fillStyle = classColors[class_name] || "red";
             ctx.font = "14px Arial";
 
             // Include track_id in the label if available
@@ -202,6 +213,7 @@ const VideoDisplay = () => {
     selectedModel,
     containerWidth,
     isVideoPaused,
+    classColors, // React to changes in class colors
   ]);
 
   return (
@@ -325,6 +337,54 @@ const VideoDisplay = () => {
       >
         {isVideoPaused ? "Resume" : "Stop"}
       </button>
+
+      {/* Class Color Customization */}
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: "15px",
+          borderRadius: "6px",
+          marginTop: "20px",
+        }}
+      >
+        <h6
+          style={{ fontSize: "24px", marginBottom: "15px", marginTop: "10px" }}
+        >
+          Customize Class Colors
+        </h6>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "10px",
+          }}
+        >
+          {Array.from(
+            new Set(detections.flat().map((det) => det.class_name))
+          ).map((className) => (
+            <div
+              key={className}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <label
+                htmlFor={`${className}-color`}
+                style={{ flex: "1", fontSize: "18px" }}
+              >
+                {className}:
+              </label>
+              <input
+                type="color"
+                id={`${className}-color`}
+                value={classColors[className] || "#ff0000"} // Default to red
+                onChange={(e) =>
+                  handleClassColorChange(className, e.target.value)
+                }
+                style={{ margin: "10px", flex: "1" }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {videoSource && (
         <div style={{ position: "relative" }}>
