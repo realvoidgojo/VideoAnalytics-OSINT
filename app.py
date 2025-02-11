@@ -2,8 +2,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS
 from src import video_processing, object_detection
-import os , shutil
-import threading  # Import threading
+import os
+import threading
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the entire app
@@ -22,16 +22,16 @@ def process_video():
     """
     Processes a video file, performs object detection, and returns the results as JSON.
     """
-    global is_processing, is_paused, current_video_path, current_frame_index, frames ,  skip_processing
-    
+    global is_processing, is_paused, current_video_path, current_frame_index, frames, skip_processing
+
     if 'video' not in request.files:
         return jsonify({'error': 'No video file provided'}), 400
 
     video_file = request.files['video']
     if video_file.filename == '':
         return jsonify({'error': 'No video selected'}), 400
-    
-    model_name = request.form.get('model', 'yolov11n.pt') #if no name defaults to yolov11n
+
+    model_name = request.form.get('model', 'yolov11n.pt')  # if no name defaults to yolov11n
     print(f"Request for model {model_name}")
 
     frame_interval = int(request.form.get('interval', 1))
@@ -45,41 +45,38 @@ def process_video():
         if is_processing:
             return jsonify({'error': 'Already processing a video'}), 400
 
+        # Reset state variables
         is_processing = True
         is_paused = False
         skip_processing = False
         current_video_path = video_path
         current_frame_index = 0
+        frames = []
         all_results = []
+        # print(f"Current video path after upload: {current_video_path}")
 
     try:
-
         frames = video_processing.extract_frames(video_path, interval=frame_interval)
         all_results = []
-
-        
         for i, frame in enumerate(frames):
             current_frame_index = i  # Update frame index
             # Check if processing should stop or pause
             if not is_processing or skip_processing:
-                print("Processing stopped by user")
+                print("Processing stopped by user or reset")
                 break
             if is_paused:
                 print("Processing paused by user")
                 while is_paused:  # Wait while paused
-                    pass  # or time.sleep(0.1) to avoid busy-waiting
+                    pass
 
             print(f"Original Frame Dimensions: {frame.shape}")
 
             original_height, original_width = frame.shape[:2]
             preprocessed_frame = video_processing.preprocess_frame(frame)
-            
             # Debug: Print preprocessed frame dimensions
             print(f"Preprocessed Frame Dimensions: {preprocessed_frame.shape}")
-
             # Use updated object detection method
-            object_results = object_detection.detect_objects(preprocessed_frame, model_path = f"./models/{model_name}")
-            
+            object_results = object_detection.detect_objects(preprocessed_frame, model_path=f"./models/{model_name}")
             # Debug: Print raw object results
             print(f"Raw Object Results: {object_results}")
 
@@ -92,7 +89,7 @@ def process_video():
                     'box': detection['box'],  # Directly use bbox
                     'track_id': detection['track_id']
                 })
-            
+
             all_results.append(formatted_results)
 
         # Debug: Print total results
@@ -100,38 +97,53 @@ def process_video():
         print(f"Results Sample: {all_results[:2]}")
 
         return jsonify({
-    'results': all_results,
-    'original_width': original_width,
-    'original_height': original_height,
-    'preprocessed_width': preprocessed_frame.shape[1],  # width is shape[1]
-    'preprocessed_height': preprocessed_frame.shape[0]  # height is shape[0]
-})
+            'results': all_results,
+            'original_width': original_width,
+            'original_height': original_height,
+            'preprocessed_width': preprocessed_frame.shape[1],  # width is shape[1]
+            'preprocessed_height': preprocessed_frame.shape[0]  # height is shape[0]
+        })
 
     except Exception as e:
         print(f"Processing Error: {e}")
         return jsonify({'error': str(e)}), 500
 
     finally:  # Cleanup
+         is_processing = False
+         is_paused = False
+         skip_processing = False  # Reset Skip flag
 
-        is_processing = False
-        is_paused = False
-        skip_processing = False #Reset Skip flag
+         if current_video_path and os.path.exists(current_video_path):
+             try:
+                 os.remove(current_video_path)
+                 print(f"Successfully removed video file: {current_video_path} after processing.")
+             except Exception as e:
+                 print(f"Error removing video file: {e} after processing.")
 
-        current_video_path = None
-        current_frame_index = 0
-        frames = []  # Clear frames
-
-        if os.path.exists(video_path):
-            if os.path.isdir(video_path):  # Check if it's a directory
-                shutil.rmtree(video_path)  # Remove directory
-            elif os.path.isfile(video_path):  # Check if it's a file  
-                os.remove(video_path)
+         current_video_path = None    
+         current_frame_index = 0
+         frames = []  # Clear frames
 
 @app.route('/reset_processing', methods=['POST'])
 def reset_processing():
-    """Skips the current video processing."""
-    global skip_processing
-    skip_processing = True
+    """Stops and resets the video processing."""
+    global is_processing, is_paused, current_video_path, current_frame_index, frames, skip_processing
+
+    with processing_lock:
+        skip_processing = True  # Stop current processing
+        # Ensure processing flags are reset
+        is_processing = False
+        is_paused = False
+        current_frame_index = 0
+        frames = []
+
+    # Delete the video file
+    if current_video_path and os.path.exists(current_video_path):
+        try:
+            os.remove(current_video_path)
+            print(f"Successfully removed video file: {current_video_path} after reset.")
+        except Exception as e:
+            print(f"Error removing video file: {e} after reset.")
     return jsonify({'message': 'Processing will be skipped after current frame'})
 
 # End point to pause the video
@@ -143,7 +155,6 @@ def pause_processing():
     return jsonify({'message': 'Processing paused'})
 
 # End point to resume the video
-
 @app.route('/resume_processing', methods=['POST'])
 def resume_processing():
     """Resumes the video processing."""
@@ -151,8 +162,5 @@ def resume_processing():
     is_paused = False
     return jsonify({'message': 'Processing resumed'})
 
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-
