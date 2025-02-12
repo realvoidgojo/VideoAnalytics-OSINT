@@ -1,6 +1,57 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
+// Helper function to generate a distinct color
+
+const getDistinctColor = (existingColors) => {
+  let hue = Math.random() * 360; // Initial random hue
+  const minHueDifference = 30; // Minimum degrees of hue difference
+
+  // Function to calculate the hue difference
+  const hueDifference = (hue1, hue2) => {
+    let diff = Math.abs(hue1 - hue2);
+    return Math.min(diff, 360 - diff);
+  };
+
+  // Ensure the new color is distinct from existing colors
+  if (existingColors.length > 0) {
+    let validHue = false;
+    let attempts = 0;
+    while (!validHue && attempts < 100) {
+      validHue = true;
+      for (let i = 0; i < existingColors.length; i++) {
+        const existingHue = existingColors[i];
+        if (hueDifference(hue, existingHue) < minHueDifference) {
+          hue = Math.random() * 360; // Generate a new hue
+          validHue = false;
+          break;
+        }
+      }
+
+      attempts++;
+    }
+  }
+
+  // Convert HSL to hex
+
+  const hslToHex = (h, s, l) => {
+    l /= 100;
+    const a = (s * Math.min(l, 1 - l)) / 100;
+    const f = (n) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+
+      return Math.round(255 * color)
+        .toString(16)
+        .padStart(2, "0"); // convert to Hex and pad
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  };
+  // Convert the HSL value to Hex
+  const hexColor = hslToHex(hue, 90, 50); // High saturation and brightness
+  return { hue: hue, hex: hexColor };
+};
+
 const VideoDisplay = () => {
   const [videoSource, setVideoSource] = useState(null);
   const [detections, setDetections] = useState([]);
@@ -134,7 +185,10 @@ const VideoDisplay = () => {
     setClassColors((prevColors) => ({
       ...prevColors,
 
-      [className]: color,
+      [className]: {
+        hue: prevColors[className]?.hue || 0,
+        hex: color,
+      },
     }));
   };
 
@@ -167,14 +221,18 @@ const VideoDisplay = () => {
             const x2 = box[2] * widthScaleFactor;
             const y2 = box[3] * heightScaleFactor;
 
+            // Get class color from state
+
+            const classColor = classColors[class_name]?.hex || "#ff0000"; // Default to red
+
             ctx.beginPath();
             ctx.rect(x1, y1, x2 - x1, y2 - y1);
-            ctx.strokeStyle = classColors[class_name] || "red"; // Use class-specific color or default to red
+            ctx.strokeStyle = classColor; // Use class-specific color or default to red
             ctx.lineWidth = 2;
             ctx.stroke();
 
             // Draw the label
-            ctx.fillStyle = classColors[class_name] || "red";
+            ctx.fillStyle = classColor;
             ctx.font = "14px Arial";
 
             // Include track_id in the label if available
@@ -215,6 +273,35 @@ const VideoDisplay = () => {
     isVideoPaused,
     classColors, // React to changes in class colors
   ]);
+
+  // Update class colors when new detections arrive
+
+  useEffect(() => {
+    if (detections && detections.length > 0) {
+      const detectedClasses = new Set(
+        detections.flat().map((det) => det.class_name)
+      );
+
+      setClassColors((prevColors) => {
+        let newColors = { ...prevColors };
+
+        let existingHues = Object.values(newColors).map((color) => color.hue);
+
+        detectedClasses.forEach((className) => {
+          if (!newColors[className]) {
+            const distinctColor = getDistinctColor(existingHues);
+            newColors[className] = {
+              hue: distinctColor.hue,
+              hex: distinctColor.hex,
+            };
+            existingHues.push(distinctColor.hue); // Assign random color if not already assigned
+          }
+        });
+
+        return newColors;
+      });
+    }
+  }, [detections]);
 
   return (
     <div style={{ position: "relative" }}>
@@ -375,7 +462,7 @@ const VideoDisplay = () => {
               <input
                 type="color"
                 id={`${className}-color`}
-                value={classColors[className] || "#ff0000"} // Default to red
+                value={classColors[className]?.hex || "#ff0000"} // Default to red
                 onChange={(e) =>
                   handleClassColorChange(className, e.target.value)
                 }
