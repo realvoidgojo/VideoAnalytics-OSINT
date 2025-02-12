@@ -232,14 +232,21 @@ const VideoDisplay = () => {
             ctx.stroke();
 
             // Draw the label
+            ctx.font = "12px Arial";
             ctx.fillStyle = classColor;
-            ctx.font = "14px Arial";
+            ctx.fillRect(
+              x1,
+              y1 - 15,
+              ctx.measureText(class_name).width + 65,
+              15
+            ); // Background rectangle
+            ctx.fillStyle = "#000";
 
             // Include track_id in the label if available
             const label = track_id
               ? `${class_name} ${confidence.toFixed(2)} (ID: ${track_id})`
               : `${class_name} ${confidence.toFixed(2)}`;
-            ctx.fillText(label, x1, y1 - 5);
+            ctx.fillText(label, x1, y1 - 2);
           }
         });
       }
@@ -294,7 +301,8 @@ const VideoDisplay = () => {
               hue: distinctColor.hue,
               hex: distinctColor.hex,
             };
-            existingHues.push(distinctColor.hue); // Assign random color if not already assigned
+            // Assign random color if not already assigned
+            existingHues.push(distinctColor.hue);
           }
         });
 
@@ -496,7 +504,7 @@ const VideoDisplay = () => {
               zIndex: 2,
               padding: "5px",
               pointerEvents: "none",
-              marginTop: "10px", // Add some space between video and canvas
+              marginTop: "10px",
             }}
           />
         </div>
