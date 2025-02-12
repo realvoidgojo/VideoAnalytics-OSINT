@@ -10,6 +10,11 @@ Before you begin, ensure you have the following installed:
 - **Node.js and npm**
 - **Git** (for cloning the repository)
 
+For Nvidia GPU
+
+- **cuDNN**
+- **PyTorch** with CUDA support
+
 ## Installation
 
 1.  **Clone the repository:**
@@ -37,6 +42,14 @@ Before you begin, ensure you have the following installed:
       ```
       pip install flask flask-cors opencv-python ultralytics Pillow
       ```
+
+    For Nvidia GPU CUDA Support , if you already have `pytorch` then `pip uninstall torch torchvision torchaudio`
+
+    ```
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+    ```
+
+    (Replace cu126 with your CUDA version, e.g., cu118 for CUDA 12.6)
 
     - **Download YOLOv11 Models:** Create a directory named `models` in your backend directory. Download the desired YOLOv11 models (e.g., `yolov11n.pt`, `yolov11s.pt`, etc.) from the [official YOLOv11 repository](https://github.com/ultralytics/ultralytics) or the [Ultralytics website](https://ultralytics.com/) and place them in the `models` directory.
 
@@ -126,9 +139,7 @@ video-object-detection-project/
 
 - **Video Not Playing:** If the video is not playing in the React app, make sure that the video file is a supported format and that the `videoSource` state variable is correctly set.
 
-
 https://github.com/user-attachments/assets/6676dffa-0451-43ef-a0bf-6a1b65836654
-
 
 ## Contributing
 

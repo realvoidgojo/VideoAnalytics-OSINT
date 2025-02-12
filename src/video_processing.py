@@ -21,4 +21,3 @@ def preprocess_frame(frame, resize_width=640, resize_height=480):
     resized_frame = cv2.resize(frame, (resize_width, resize_height))
     return resized_frame
 
-

@@ -2,6 +2,10 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 from collections import defaultdict
+import torch
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
 
 # Simple Unique ID generator (replace with more robust method if needed)
 class UniqueIDGenerator:
@@ -13,9 +17,8 @@ class UniqueIDGenerator:
         return self.next_id
 
 def detect_objects(frame, model_path="./models/yolov11n.pt", confidence_threshold=0.5, iou_threshold=0.5):
-    model = YOLO(model_path)
+    model = YOLO(model_path).to(device)  # Move model to GPU
     results = model.track(frame, persist=True, conf=confidence_threshold, iou=iou_threshold)
-    
     detections = []
     if results and results[0].boxes:
         for box in results[0].boxes:
