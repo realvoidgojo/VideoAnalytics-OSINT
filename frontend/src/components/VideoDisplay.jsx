@@ -236,7 +236,7 @@ const VideoDisplay = () => {
             ctx.fillStyle = classColor;
             ctx.fillRect(
               x1,
-              y1 - 15,
+              y1 - 1,
               ctx.measureText(class_name).width + 65,
               15
             ); // Background rectangle
@@ -246,7 +246,7 @@ const VideoDisplay = () => {
             const label = track_id
               ? `${class_name} ${confidence.toFixed(2)} (ID: ${track_id})`
               : `${class_name} ${confidence.toFixed(2)}`;
-            ctx.fillText(label, x1, y1 - 2);
+            ctx.fillText(label, x1, y1 + 10);
           }
         });
       }

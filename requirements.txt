@@ -4,3 +4,4 @@ deepface
 kafka-python  # If you plan to implement alerts
 websockets    # If you plan to implement alerts
 numpy
+lap>=0.5.12
