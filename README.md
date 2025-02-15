@@ -49,7 +49,7 @@ For Nvidia GPU
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
     ```
 
-    (Replace cu126 with your CUDA version, e.g., cu118 for CUDA 12.6)
+    (Replace cu126 with your CUDA version, e.g., cu126 for CUDA 12.6)
 
     - **Download YOLOv11 Models:** Create a directory named `models` in your backend directory. Download the desired YOLOv11 models (e.g., `yolov11n.pt`, `yolov11s.pt`, etc.) from the [official YOLOv11 repository](https://github.com/ultralytics/ultralytics) or the [Ultralytics website](https://ultralytics.com/) and place them in the `models` directory.
 
