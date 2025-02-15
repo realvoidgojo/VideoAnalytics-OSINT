@@ -73,11 +73,13 @@ For Nvidia GPU
 
 - **Backend (Flask):**
 
-  - Ensure that the paths to the YOLOv11 models in your `object_detection.py` file are correct, relative to the location of your `app.py` file. The default path is `./models/yolov11n.pt`.
+  - Ensure that the paths to the YOLOv11 models in your `object_detection.py` file are correct, relative to the location of your `app.py` file. The default path is `./models/yolov11n.pt` , ensure the models are not corrupted, or please download from ultralytics and replace with respective path and name.
 
 - **Frontend (React):**
 
   - In `VideoDisplay.js`, verify that the `axios.post` URL (`http://localhost:5000/process_video`) matches the address where your Flask backend will be running.
+
+
 
 ## Running the Application
 
