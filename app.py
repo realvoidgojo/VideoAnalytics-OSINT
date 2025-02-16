@@ -1,7 +1,6 @@
 # app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS
-# from src import video_processing, object_detection
 import os
 import threading
 import logging
@@ -11,6 +10,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the entire app
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Backend State Variables
 processing_lock = threading.Lock()
@@ -25,7 +27,6 @@ def process_video():
     """
     Processes a video file, performs object detection, and returns the results as JSON.
     """
-
     if 'video' not in request.files:
         return jsonify({'error': 'No video file provided'}), 400
 
@@ -72,41 +73,20 @@ def task_status(task_id):
 
 @app.route('/reset_processing', methods=['POST'])
 def reset_processing():
-    """Stops and resets the video processing."""
-    global is_processing, is_paused, current_video_path, current_frame_index, frames, skip_processing
-
-    with processing_lock:
-        skip_processing = True  # Stop current processing
-        # Ensure processing flags are reset
-        is_processing = False
-        is_paused = False
-        current_frame_index = 0
-        frames = []
-
-    # Delete the video file
-    if current_video_path and os.path.exists(current_video_path):
-        try:
-            os.remove(current_video_path)
-            print(f"Successfully removed video file: {current_video_path} after reset.")
-        except Exception as e:
-            print(f"Error removing video file: {e} after reset.")
-    return jsonify({'message': 'Processing will be skipped after current frame'})
+    """Not implemented."""
+    return jsonify({'message': 'Not implemented'})
 
 # End point to pause the video
 @app.route('/pause_processing', methods=['POST'])
 def pause_processing():
-    """Pauses the video processing."""
-    global is_paused
-    is_paused = True
-    return jsonify({'message': 'Processing paused'})
+    """Not implemented."""
+    return jsonify({'message': 'Not implemented'})
 
 # End point to resume the video
 @app.route('/resume_processing', methods=['POST'])
 def resume_processing():
-    """Resumes the video processing."""
-    global is_paused
-    is_paused = False
-    return jsonify({'message': 'Processing resumed'})
+    """Not implemented"""
+    return jsonify({'message': 'Not implemented'})
 
 if __name__ == '__main__':
     app.run(debug=True)

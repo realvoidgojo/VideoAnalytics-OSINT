@@ -3,6 +3,17 @@ from .celery import celery_app
 from . import video_processing, object_detection
 import os
 import time
+import logging  # Import the logging module
+
+# Configure logging within this module
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# Add handler to print to console
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 @celery_app.task(bind=True)
 def process_video_task(self, video_path, model_name, frame_interval):
     """

@@ -81,38 +81,6 @@ const VideoDisplay = () => {
     setSelectedFile(file);
   };
 
-  // const handleStartProcessing = async () => {
-  //   setIsProcessing(true); // Start processing
-
-  //   const formData = new FormData();
-  //   formData.append("video", selectedFile);
-  //   formData.append("model", selectedModel);
-  //   formData.append("interval", frameInterval);
-
-  //   try {
-  //     const response = await axios.post(
-  //       "http://localhost:5000/process_video",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-
-  //     setOriginalWidth(response.data.original_width);
-  //     setOriginalHeight(response.data.original_height);
-  //     setPreprocessedWidth(response.data.preprocessed_width);
-  //     setPreprocessedHeight(response.data.preprocessed_height);
-  //     setDetections(response.data.results);
-  //   } catch (error) {
-  //     console.error("Error processing video:", error);
-  //     alert("Error processing video. Please check the console for details.");
-  //   } finally {
-  //     setIsProcessing(false); // Processing done
-  //   }
-  // };
-
   const handleStartProcessing = async () => {
     setIsProcessing(true); // Start processing
 
