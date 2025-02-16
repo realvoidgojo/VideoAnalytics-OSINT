@@ -89,6 +89,8 @@ For Nvidia GPU
 
       ```
       python app.py
+      celery -A src.celery.celery_app worker --loglevel=info --pool=threads -c 4
+
       ```
 
     - Note the address the Flask app is running on (e.g., `http://127.0.0.1:5000`).

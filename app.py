@@ -1,17 +1,20 @@
 # app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS
-from src import video_processing, object_detection
+# from src import video_processing, object_detection
 import os
 import threading
+import logging
+from src.video_processing_tasks import process_video_task #Import 
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the entire app
 
 # Backend State Variables
 processing_lock = threading.Lock()
-is_processing = False
-is_paused = False
+
 current_video_path = None
 current_frame_index = 0
 frames = []  # Store extracted frames
@@ -22,7 +25,6 @@ def process_video():
     """
     Processes a video file, performs object detection, and returns the results as JSON.
     """
-    global is_processing, is_paused, current_video_path, current_frame_index, frames, skip_processing
 
     if 'video' not in request.files:
         return jsonify({'error': 'No video file provided'}), 400
@@ -41,88 +43,32 @@ def process_video():
     video_path = os.path.join('data', video_file.filename)  # Use the 'data' directory
     video_file.save(video_path)
 
-    with processing_lock:
-        if is_processing:
-            return jsonify({'error': 'Already processing a video'}), 400
+    task = process_video_task.delay(video_path, model_name, frame_interval)
+    return jsonify({'task_id': task.id, 'message': 'Processing started in background'})
 
-        # Reset state variables
-        is_processing = True
-        is_paused = False
-        skip_processing = False
-        current_video_path = video_path
-        current_frame_index = 0
-        frames = []
-        all_results = []
-        # print(f"Current video path after upload: {current_video_path}")
-
-    try:
-        frames = video_processing.extract_frames(video_path, interval=frame_interval)
-        all_results = []
-        for i, frame in enumerate(frames):
-            current_frame_index = i  # Update frame index
-            # Check if processing should stop or pause
-            if not is_processing or skip_processing:
-                print("Processing stopped by user or reset")
-                break
-            if is_paused:
-                print("Processing paused by user")
-                while is_paused:  # Wait while paused
-                    pass
-
-            print(f"Original Frame Dimensions: {frame.shape}")
-
-            original_height, original_width = frame.shape[:2]
-            preprocessed_frame = video_processing.preprocess_frame(frame)
-            # Debug: Print preprocessed frame dimensions
-            print(f"Preprocessed Frame Dimensions: {preprocessed_frame.shape}")
-            # Use updated object detection method
-            object_results = object_detection.detect_objects(preprocessed_frame, model_path=f"./models/{model_name}")
-            # Debug: Print raw object results
-            print(f"Raw Object Results: {object_results}")
-
-            formatted_results = []
-            for detection in object_results:
-                # Directly use detection dictionary
-                formatted_results.append({
-                    'class_name': detection['class_name'],
-                    'confidence': detection['confidence'],
-                    'box': detection['box'],  # Directly use bbox
-                    'track_id': detection['track_id']
-                })
-
-            all_results.append(formatted_results)
-
-        # Debug: Print total results
-        print(f"Total Frames Processed: {len(all_results)}")
-        print(f"Results Sample: {all_results[:2]}")
-
-        return jsonify({
-            'results': all_results,
-            'original_width': original_width,
-            'original_height': original_height,
-            'preprocessed_width': preprocessed_frame.shape[1],  # width is shape[1]
-            'preprocessed_height': preprocessed_frame.shape[0]  # height is shape[0]
-        })
-
-    except Exception as e:
-        print(f"Processing Error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-    finally:  # Cleanup
-         is_processing = False
-         is_paused = False
-         skip_processing = False  # Reset Skip flag
-
-         if current_video_path and os.path.exists(current_video_path):
-             try:
-                 os.remove(current_video_path)
-                 print(f"Successfully removed video file: {current_video_path} after processing.")
-             except Exception as e:
-                 print(f"Error removing video file: {e} after processing.")
-
-         current_video_path = None    
-         current_frame_index = 0
-         frames = []  # Clear frames
+@app.route('/task_status/<task_id>', methods=['GET'])
+def task_status(task_id):
+    """Retrieves status of an asynchronous task."""
+    task = process_video_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'status': task.info,  # Can be a dictionary
+        }
+        if task.state == 'SUCCESS':
+           response['results'] = task.info  # Add the results to the response
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
 
 @app.route('/reset_processing', methods=['POST'])
 def reset_processing():

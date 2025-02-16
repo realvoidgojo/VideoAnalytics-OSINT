@@ -70,6 +70,9 @@ const VideoDisplay = () => {
   const [hasVideoUploaded, setHasVideoUploaded] = useState(false); // Track if video is uploaded
   const [selectedFile, setSelectedFile] = useState(null);
   const [classColors, setClassColors] = useState({});
+  const [taskID, setTaskID] = useState(null);
+  const [existingColors, setExistingColors] = useState([]);
+  const [processingStatus, setProcessingStatus] = useState("");
 
   const handleVideoUpload = (event) => {
     const file = event.target.files[0];
@@ -77,6 +80,38 @@ const VideoDisplay = () => {
     setHasVideoUploaded(true);
     setSelectedFile(file);
   };
+
+  // const handleStartProcessing = async () => {
+  //   setIsProcessing(true); // Start processing
+
+  //   const formData = new FormData();
+  //   formData.append("video", selectedFile);
+  //   formData.append("model", selectedModel);
+  //   formData.append("interval", frameInterval);
+
+  //   try {
+  //     const response = await axios.post(
+  //       "http://localhost:5000/process_video",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     );
+
+  //     setOriginalWidth(response.data.original_width);
+  //     setOriginalHeight(response.data.original_height);
+  //     setPreprocessedWidth(response.data.preprocessed_width);
+  //     setPreprocessedHeight(response.data.preprocessed_height);
+  //     setDetections(response.data.results);
+  //   } catch (error) {
+  //     console.error("Error processing video:", error);
+  //     alert("Error processing video. Please check the console for details.");
+  //   } finally {
+  //     setIsProcessing(false); // Processing done
+  //   }
+  // };
 
   const handleStartProcessing = async () => {
     setIsProcessing(true); // Start processing
@@ -96,12 +131,13 @@ const VideoDisplay = () => {
           },
         }
       );
-
-      setOriginalWidth(response.data.original_width);
-      setOriginalHeight(response.data.original_height);
-      setPreprocessedWidth(response.data.preprocessed_width);
-      setPreprocessedHeight(response.data.preprocessed_height);
-      setDetections(response.data.results);
+      //get TaskID from backend
+      setTaskID(response.data.task_id);
+      console.log("Task ID:", response.data.task_id);
+      alert(
+        "Processing started in background with task ID: " +
+          response.data.task_id
+      );
     } catch (error) {
       console.error("Error processing video:", error);
       alert("Error processing video. Please check the console for details.");
@@ -109,6 +145,8 @@ const VideoDisplay = () => {
       setIsProcessing(false); // Processing done
     }
   };
+
+
   const handleReset = async () => {
     // Reset video source, detections, and other relevant states
     setVideoSource(null);
@@ -191,6 +229,36 @@ const VideoDisplay = () => {
       },
     }));
   };
+
+    // Update class colors when new detections arrive
+    useEffect(() => {
+
+      if (detections && detections.length > 0) {
+        const detectedClasses = new Set(
+          detections.flat().map((det) => det.class_name)
+        );
+  
+        setClassColors((prevColors) => {
+          let newColors = { ...prevColors };
+  
+          let existingHues = Object.values(newColors).map((color) => color.hue);
+  
+          detectedClasses.forEach((className) => {
+            if (!newColors[className]) {
+              const distinctColor = getDistinctColor(existingHues);
+              newColors[className] = {
+                hue: distinctColor.hue,
+                hex: distinctColor.hex,
+              };
+              // Assign random color if not already assigned
+              existingHues.push(distinctColor.hue);
+            }
+          });
+  
+          return newColors;
+        });
+      }
+    }, [detections]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -281,35 +349,51 @@ const VideoDisplay = () => {
     classColors, // React to changes in class colors
   ]);
 
-  // Update class colors when new detections arrive
+  const fetchTaskResult = async (task_id) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/task_status/${task_id}`
+      );
+      console.log("Task Status:", response.data);
+      if (response.data.state === "SUCCESS" && response.data.status) {
+        // Check if results are available
+        const result = response.data.status;
+        setOriginalWidth(result.original_width || 0);
+        setOriginalHeight(result.original_height || 0);
+        setPreprocessedWidth(result.preprocessed_width || 0);
+        setPreprocessedHeight(result.preprocessed_height || 0);
+        setDetections(result.results || []);
+        setProcessingStatus("Completed"); // Update processing status
+      } else if (
+        response.data.state === "PENDING" ||
+        response.data.state === "PROCESSING"
+      ) {
+        setProcessingStatus("Processing..."); // Update processing status
+      } else if (response.data.state === "FAILURE") {
+        setProcessingStatus(`Failed: ${response.data.status}`); // Update processing status
+      }
+    } catch (error) {
+      console.error("Error fetching task result:", error);
+      setProcessingStatus("Error fetching results."); // Update processing status
+    }
+  };
 
   useEffect(() => {
-    if (detections && detections.length > 0) {
-      const detectedClasses = new Set(
-        detections.flat().map((det) => det.class_name)
-      );
-
-      setClassColors((prevColors) => {
-        let newColors = { ...prevColors };
-
-        let existingHues = Object.values(newColors).map((color) => color.hue);
-
-        detectedClasses.forEach((className) => {
-          if (!newColors[className]) {
-            const distinctColor = getDistinctColor(existingHues);
-            newColors[className] = {
-              hue: distinctColor.hue,
-              hex: distinctColor.hex,
-            };
-            // Assign random color if not already assigned
-            existingHues.push(distinctColor.hue);
-          }
-        });
-
-        return newColors;
-      });
+    let intervalId;
+    if (taskID) {
+      intervalId = setInterval(() => {
+        fetchTaskResult(taskID);
+      }, 2000); // Poll every 2 seconds
     }
-  }, [detections]);
+    return () => clearInterval(intervalId); // Cleanup on unmount or taskID change
+  }, [taskID]);
+
+  useEffect(() => {
+    // Start fetching task result immediately after taskID is set
+    if (taskID) {
+      fetchTaskResult(taskID);
+    }
+  }, [taskID]);
 
   return (
     <div style={{ position: "relative" }}>
